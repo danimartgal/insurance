@@ -48,6 +48,7 @@ class InsuranceResource {
             }.run {
                 Response.status(Response.Status.CREATED).entity(id).build()
             }
+            //No catch exception block
         }
     }
 
