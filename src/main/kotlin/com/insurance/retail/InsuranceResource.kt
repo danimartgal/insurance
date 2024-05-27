@@ -14,7 +14,7 @@ class InsuranceResource {
     private val policies = mutableMapOf<String, Policy>()
 
     init {
-        // Bad practice: Simulates a database
+        //Simulates a database
         policies["1"] = Policy("1", "Car Insurance", "This is a car insurance policy.", Vehicle("Car", "Toyota", "Corolla", 2020))
         policies["2"] = Policy("2", "Home Insurance", "This is a home insurance policy.", null)
     }
