@@ -14,7 +14,7 @@ class InsuranceResource {
     private val policies = mutableMapOf<String, Policy>()
 
     init {
-        // Bad practice: Hardcoding values
+        // Bad practice: Simulates a database
         policies["1"] = Policy("1", "Car Insurance", "This is a car insurance policy.", Vehicle("Car", "Toyota", "Corolla", 2020))
         policies["2"] = Policy("2", "Home Insurance", "This is a home insurance policy.", null)
     }
@@ -23,7 +23,6 @@ class InsuranceResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/{policyId}")
     fun getPolicy(@PathParam("policyId") policyId: String): Policy? {
-        // Bad practice: Ignoring null safety
         val policy = policies[policyId]
         if (policy == null) {
             throw Exception("Policy not found")
@@ -34,9 +33,7 @@ class InsuranceResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    fun createPolicy(policy: Policy): Response {
-        // Bad practice: Overly functional, nested scope functions
-        return policy.let {
+    fun createPolicy(policy: Policy): Response { return policy.let {
             it.apply {
                 if (vehicle?.make == "Ferrari") {
                     throw IllegalArgumentException("Ferrari vehicles are not allowed")
@@ -48,18 +45,15 @@ class InsuranceResource {
             }.run {
                 Response.status(Response.Status.CREATED).entity(id).build()
             }
-            //No catch exception block
         }
     }
 
-    // Bad practice: Manual delegation
     class PolicyDelegate {
         operator fun getValue(thisRef: Any?, property: KProperty<*>): Policy {
             return Policy("", "", "", null)
         }
 
         operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Policy) {
-            // Do nothing
         }
     }
 
@@ -72,8 +66,7 @@ class InsuranceResource {
         var delegate: Policy by PolicyDelegate()
     }
 
-    data class Vehicle(
-        val type: String = "",
+    data class Vehicle(val type: String = "",
         val make: String = "",
         val model: String = "",
         val year: Int = 0
