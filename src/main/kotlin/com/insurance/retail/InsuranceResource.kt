@@ -5,70 +5,59 @@ import jakarta.ws.rs.*
 import jakarta.ws.rs.core.MediaType
 import jakarta.ws.rs.core.Response
 import java.util.*
-import kotlin.reflect.KProperty
 
 @ApplicationScoped
-@Path("/insurance")
-class InsuranceResource {
+@Path("/policies")
+class PolicyResource {
 
     private val policies = mutableMapOf<String, Policy>()
 
     init {
-        //Simulates a database
-        policies["1"] = Policy("1", "Car Insurance", "This is a car insurance policy.", Vehicle("Car", "Toyota", "Corolla", 2020))
-        policies["2"] = Policy("2", "Home Insurance", "This is a home insurance policy.", null)
+        // Initialize with sample data
+        policies["1"] = Policy("1", "Life Insurance", "Coverage for life.", 2000.0)
+        policies["2"] = Policy("2", "Auto Insurance", "Coverage for vehicles.", 1500.0)
     }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/{policyId}")
-    fun getPolicy(@PathParam("policyId") policyId: String): Policy? {
-        val policy = policies[policyId]
-        if (policy == null) {
-            throw Exception("Policy not found")
-        }
-        return policy
+    fun getPolicy(@PathParam("policyId") policyId: String): Policy {
+        return policies[policyId] ?: throw IllegalStateException("Policy not found")
     }
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    fun createPolicy(policy: Policy): Response { return policy.let {
-            it.apply {
-                if (vehicle?.make == "Ferrari") {
-                    throw IllegalArgumentException("Ferrari vehicles are not allowed")
-                }
-            }.also {
-                val policyId = UUID.randomUUID().toString()
-                val newPolicy = Policy(policyId, it.type, it.description, it.vehicle)
-                policies[policyId] = newPolicy
-            }.run {
-                Response.status(Response.Status.CREATED).entity(id).build()
-            }
+    fun createPolicy(policy: Policy): Response {
+        val policyId = UUID.randomUUID().toString()
+        policies[policyId] = policy.copy(id = policyId)
+        return Response.status(Response.Status.CREATED).entity(policyId).build()
+    }
+
+    @DELETE
+    @Path("/{policyId}")
+    fun deletePolicy(@PathParam("policyId") policyId: String): Response {
+        try {
+            policies.remove(policyId) ?: throw IllegalStateException("Policy not found")
+            return Response.status(Response.Status.NO_CONTENT).build()
+        } catch (e: Exception) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Error deleting policy").build()
         }
     }
 
-    class PolicyDelegate {
-        operator fun getValue(thisRef: Any?, property: KProperty<*>): Policy {
-            return Policy("", "", "", null)
-        }
-
-        operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Policy) {
-        }
+    @PUT
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/{policyId}")
+    fun updatePolicy(@PathParam("policyId") policyId: String, updatedPolicy: Policy): Policy {
+        policies[policyId] = updatedPolicy.copy(id = policyId)
+        return updatedPolicy
     }
 
     data class Policy(
-        val id: String = "",
-        val type: String = "",
-        val description: String = "",
-        val vehicle: Vehicle? = null
-    ) {
-        var delegate: Policy by PolicyDelegate()
-    }
-
-    data class Vehicle(val type: String = "",
-        val make: String = "",
-        val model: String = "",
-        val year: Int = 0
+        val id: String,
+        val type: String,
+        val description: String,
+        val premium: Double
     )
 }
